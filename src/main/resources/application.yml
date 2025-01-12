@@ -2,4 +2,4 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://root:example@localhost:27017/InfraOpsDB?authSource=admin&connectTimeoutMS=3000
+      uri: ${MONGO_DB_URL:mongodb://root:example@localhost:27017/InfraOpsDB?authSource=admin&connectTimeoutMS=3000}

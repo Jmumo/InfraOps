@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-deploy
+  template:
+    metadata:
+      labels:
+        app: app-deploy
+    spec:
+      containers:
+      - name: app-deploy
+        image: mjupiter/infraops:latest
+        ports:
+        - containerPort: 8080
+
+        # Environment variables for MongoDB connection
+        env:
+        - name: MONGO_DB_URL
+          value: "mongodb://root:example@mongodb-0.mongo-svc:27017/InfraOpsDB?authSource=admin&connectTimeoutMS=3000"
+        - name: MONGO_USER
+          value: "root"
+        - name: MONGO_PASSWORD
+          value: "example"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-deploy-svc
+spec:
+  selector:
+    app: app-deploy
+  ports:
+  - port: 8080 # External port
+    nodePort: 30001 # Port on the node (30000-32767 range)
+  type: NodePort
+
