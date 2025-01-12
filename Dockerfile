@@ -51,7 +51,8 @@ EXPOSE 8080
 RUN mkdir /app
 
 # Copy the built JAR from the Gradle build stage
-COPY /build/libs/*.jar app.jar
+#COPY /build/libs/*.jar app.jar
+COPY build/libs/*.jar /app/spring-boot-application.jar
 
 # Entry point to run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
