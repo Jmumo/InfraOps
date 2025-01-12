@@ -1,62 +1,20 @@
-## Use a more specific OpenJDK image with minimal setup
-#FROM openjdk:17-jdk-slim
-#
-## Set working directory
-#WORKDIR /app
-#
-## Copy build artifacts
-#COPY build/libs/*.jar app.jar
-#
-## Expose the port
-#EXPOSE 8080
-#
-## Command to run the application
-#ENTRYPOINT ["java", "-jar", "app.jar"]
+FROM eclipse-temurin:17-jdk-alpine AS build
+WORKDIR /app
+COPY . .
+RUN ./gradlew clean build --exclude-task test
 
+FROM eclipse-temurin:17-jre-alpine
+LABEL org.opencontainers.image.source="https://github.com/ajharry69/kyosk-test"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 
-# Gradle build stage
-
-
-
-
-
-
-
-
-# Gradle build stage
-#FROM gradle:7.6-jdk17-alpine AS build
-
-
-
-
-FROM openjdk:17-jdk-slim
-
-# Set working directory and copy the source code
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-
-# Install Gradle if not available
-RUN apk add --no-cache gradle
-
-# Run the Gradle build
-RUN gradle build --no-daemon
-
-# Final stage
-FROM openjdk:17-jdk-slim
-
-# Expose port
+RUN addgroup -g 1000 kyosk \
+        && adduser -u 1000 -G kyosk -s /bin/sh -D kyosk
+# use of numeric UID:GID is recommended for k8s use for the following reasons:
+#   1. consistency across environments ensuring file permissions are applied correctly.
+#   2. user friendly names may resolve to different numeric IDs across systems, hence
+#      leading to unintended access/permissions.
+USER 1000:1000
+WORKDIR /app
+COPY --chown=1000:1000 --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
-
-# Create the application directory
-RUN mkdir /app
-
-# Copy the built JAR from the Gradle build stage
-#COPY /build/libs/*.jar app.jar
-COPY build/libs/*.jar /app/spring-boot-application.jar
-
-# Entry point to run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
-
-
-
