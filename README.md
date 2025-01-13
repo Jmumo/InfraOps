@@ -12,6 +12,8 @@ InfraOps is a microservice application designed for managing infrastructure oper
 - [Kubernetes Deployment](#kubernetes-deployment)
 - [Usage](#usage)
 - [License](#license)
+- [CI/CD Pipeline](#ci/cd-pipeline)
+- [Contributing](#contributing)
 
 ---
 
@@ -116,8 +118,59 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
-## Contributing
+## CI/CD Pipeline
 
-Feel free to open issues or submit pull requests for improvements.
+The project includes a GitHub Actions workflow to automate testing, building, and pushing Docker images. The workflow:
 
----
+1. **Builds and Tests** the Spring Boot application using Gradle.
+2. **Builds the Docker Image**.
+3. **Pushes the Image** to Docker Hub.
+
+### Workflow Configuration
+```yaml
+name: InfraOps CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: 17
+
+      - name: Run Gradle Tests
+        uses: gradle/gradle-build-action@v2
+        with:
+          tasks: clean test
+
+      - name: Build Docker Image
+        uses: docker/setup-buildx-action@v1
+        with:
+          context: .
+          dockerfile: Dockerfile
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/infraops:latest
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          dockerfile: Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/infraops:latest
