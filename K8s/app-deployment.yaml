@@ -1,3 +1,4 @@
+# Application Deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,13 +22,20 @@ spec:
         # Environment variables for MongoDB connection
         env:
         - name: MONGO_DB_URL
-          value: "mongodb://root:example@mongodb-0.mongo-svc:27017/InfraOpsDB?authSource=admin&connectTimeoutMS=3000"
+          value: "mongodb://$(MONGO_USER):$(MONGO_PASSWORD)@mongodb-service:27017/InfraOpsDB?authSource=admin&connectTimeoutMS=3000"
         - name: MONGO_USER
-          value: "root"
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials
+              key: MONGO_USER
         - name: MONGO_PASSWORD
-          value: "example"
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials
+              key: MONGO_PASSWORD
 
 ---
+# Application Service
 apiVersion: v1
 kind: Service
 metadata:
@@ -36,7 +44,6 @@ spec:
   selector:
     app: app-deploy
   ports:
-  - port: 8080 # External port
-    nodePort: 30001 # Port on the node (30000-32767 range)
+  - port: 8080        # External port
+    nodePort: 30001   # Port on the node (30000-32767 range)
   type: NodePort
-

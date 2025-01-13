@@ -1,3 +1,15 @@
+# MongoDB Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongo-credentials
+type: Opaque
+data:
+  MONGO_INITDB_ROOT_USERNAME: cm9vdA==    # Base64-encoded value for "root"
+  MONGO_INITDB_ROOT_PASSWORD: ZXhhbXBsZQ== # Base64-encoded value for "example"
+
+---
+# MongoDB PersistentVolume
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -25,6 +37,27 @@ spec:
     - ReadWriteOnce
 
 ---
+# MongoDB ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-init-cm
+data:
+  init-mongo.js: |
+    db = db.getSiblingDB("InfraOpsDB");
+    db.createCollection("InfraOpsDBcollection");
+    db.createUser({
+      user: process.env.MONGO_INITDB_ROOT_USERNAME,
+      pwd: process.env.MONGO_INITDB_ROOT_PASSWORD,
+      roles: [
+        { role: "readWrite", db: "InfraOpsDB" },
+        { role: "dbAdmin", db: "InfraOpsDB" }
+      ]
+    });
+    print("Database, collection, and user initialized.");
+
+---
+# MongoDB StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -48,10 +81,16 @@ spec:
           name: mongodb
 
         env:
-          - name: MONGO_INITDB_ROOT_USERNAME
-            value: root
-          - name: MONGO_INITDB_ROOT_PASSWORD
-            value: example
+        - name: MONGO_INITDB_ROOT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials
+              key: MONGO_INITDB_ROOT_USERNAME
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongo-credentials
+              key: MONGO_INITDB_ROOT_PASSWORD
 
         volumeMounts:
         - name: mongo-persistent-storage
@@ -69,25 +108,7 @@ spec:
           name: mongo-init-cm
 
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mongo-init-cm
-data:
-  init-mongo.js: |
-    db = db.getSiblingDB("InfraOpsDB");
-    db.createCollection("InfraOpsDBcollection");
-    db.createUser({
-      user: "root",
-      pwd: "example",
-      roles: [
-        { role: "readWrite", db: "InfraOpsDB" },
-        { role: "dbAdmin", db: "InfraOpsDB" }
-      ]
-    });
-    print("Database, collection, and user initialized.");
-
----
+# MongoDB Service
 apiVersion: v1
 kind: Service
 metadata:
