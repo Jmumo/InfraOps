@@ -47,3 +47,13 @@ spec:
   - port: 8080        # External port
     nodePort: 30001   # Port on the node (30000-32767 range)
   type: NodePort
+
+
+
+
+
+ 
+
+
+
+ 

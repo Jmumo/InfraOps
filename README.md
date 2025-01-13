@@ -84,6 +84,10 @@ The application uses the following environment variables. These should be config
     kubectl apply -f app-deployment.yaml
     ```
 
+    ```bash
+    kubectl apply -f mongo-deployment.yaml
+    ```
+
 ---
 
 ## Kubernetes Deployment
