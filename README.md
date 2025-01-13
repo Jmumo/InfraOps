@@ -1,79 +1,123 @@
-# Software Engineer Test
+# InfraOps Application
 
-[![CI-CD](https://github.com/ajharry69/kyosk-test/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Jmumo/InfraOps/blob/main/.github/workflows/maven.yml)
+InfraOps is a microservice application designed for managing infrastructure operations, built with Spring Boot and deployed in a Kubernetes environment.
 
-A simple spring boot application that provides an API endpoint for listing books.
+## Table of Contents
 
-## Building and Running
+- [Project Overview](#project-overview)
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Environment Variables](#environment-variables)
+- [Setup Instructions](#setup-instructions)
+- [Kubernetes Deployment](#kubernetes-deployment)
+- [Usage](#usage)
+- [License](#license)
 
-### Using (Plain) Docker
+---
 
-#### What you will need
+## Project Overview
 
-1. [Install docker][docker-installation-url].
+This project demonstrates the deployment of a Spring Boot application connected to a MongoDB database using Kubernetes. It leverages Kubernetes secrets for managing sensitive information like database credentials.
 
-#### How To Run Locally
+---
 
-. the command is running on a [Unix-based system](https://en.wikipedia.org/wiki/List_of_Unix_systems).
+## Features
 
-#### Start the application
+- RESTful APIs for resource management.
+- Integration with MongoDB.
+- Deployment on Kubernetes with LoadBalancer service.
+- Secrets management for sensitive data.
 
-Run Docker Compose file for the MongoDB then run the App
+---
 
-### Using Kubernetes (k8s)
+## Technologies Used
 
-#### What you will need
+- **Spring Boot**: Backend framework.
+- **MongoDB**: NoSQL database.
+- **Docker**: Containerization of the application.
+- **Kubernetes**: Deployment and orchestration.
+- **LoadBalancer**: External access to the service.
 
-1. [Install docker][docker-installation-url].
-2. [Install kubectl](https://kubernetes.io/docs/reference/kubectl/).
-   1. [Install for linux](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/).
-   2. [Install for macOS](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/).
-   3. [Install for Windows](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/).
-3. [Install minikube](https://minikube.sigs.k8s.io/docs/start/).
+---
 
+## Environment Variables
 
-```
+The application uses the following environment variables. These should be configured via Kubernetes Secrets:
 
-#### Apply k8s manifests
+| Variable        | Description                    |
+|-----------------|--------------------------------|
+| `MONGO_USER`    | MongoDB username              |
+| `MONGO_PASSWORD`| MongoDB password              |
+| `MONGO_DB_URL`  | MongoDB connection URL        |
 
-Cd to the K8s folder and run this comand 
+---
 
-```bash
-kubectl apply -f . 
-```
+## Setup Instructions
 
+1. **Clone the repository**:
+    ```bash
+    git clone https://github.com/Jmumo/infraops.git
+    cd infraops
+    ```
 
-## CI/CD
+2. **Build the Docker image**:
+    ```bash
+    docker build -t mjupiter/infraops:latest .
+    ```
 
-Continuous Integration (CI) & Continuous Deployment (CD) pipeline is running on GitHub Actions.
+3. **Push the Docker image to a registry**:
+    ```bash
+    docker push mjupiter/infraops:latest
+    ```
 
-### How it works
+4. **Create Kubernetes Secrets** for database credentials:
+    ```bash
+    kubectl create secret generic db-credentials \
+      --from-literal=DB_USER=your_user \
+      --from-literal=DB_PASSWORD=your_password
+    ```
 
-When changes have been pushed to the `main` branch or pull request is open to the `main` branch, the **CI** job is run.
-In the CI phase,
+5. **Apply the Kubernetes configuration**:
+    ```bash
+    kubectl apply -f app-deployment.yaml
+    ```
 
-1. the repository is first checked out (cloned locally).
-2. the mongo db versions (7 & 8) are set up and started. This will be used later.
-3. Java version 17 from the temurin distribution is set up.
-   Our application being a java application, will need it for the subsequent steps.
-4. Gradle is configured for optimal use of GitHub Actions resources through caching of downloaded dependencies.
-5. Build the application using the Gradle wrapper script to ensure everything in terms of application configuration is
-   in order.
-6. Run the automated tests included in the application using the Gradle wrapper script to ensure all the components are
-   in working order.
+---
 
-When a new release tag with the pattern `v*.*.*` is pushed, the **CD** job is run.
-But before the CD phase is run, the **CI** phase must run successfully to ensure we do not deploy broken docker images.
+## Kubernetes Deployment
 
-A new release tag can be cut as follows:
+The `app-deployment.yaml` defines:
 
-```bash
-git tag --annotate v1.0.0 --message "Version 1.0.0"
-```
+- A **Deployment** for the Spring Boot app.
+- A **Service** of type `LoadBalancer` for external access.
+- Environment variables sourced from Kubernetes Secrets.
 
-and pushed to GitHub as follows:
+---
 
-```bash
-git push --tags
-```
+## Usage
 
+1. Access the application via the LoadBalancer IP:
+    ```bash
+    curl http://<EXTERNAL-IP>/books
+    ```
+
+2. Example API usage:
+    ```bash
+    curl -X POST -H "Content-Type: application/json" \
+    -d '{"title": "1984", "author": "George Orwell"}' \
+    http://<EXTERNAL-IP>/books
+    ```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Contributing
+
+Feel free to open issues or submit pull requests for improvements.
+
+---
